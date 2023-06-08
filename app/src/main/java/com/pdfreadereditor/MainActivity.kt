@@ -16,7 +16,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    private lateinit var selectFileLauncher: ActivityResultLauncher<Array<String>>
+    private lateinit var selectFileToEditLauncher: ActivityResultLauncher<Array<String>>
+
+    private lateinit var selectFileToReadLauncher: ActivityResultLauncher<Array<String>>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,10 +27,20 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(binding.root)
 
-        selectFileLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        selectFileToReadLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             // Handle the returned Uri
             if (uri != null) {
                 val intent = Intent(this, ReadActivity::class.java).apply {
+                    putExtra("fileUri", uri.toString())
+                }
+                startActivity(intent)
+            }
+        }
+
+        selectFileToEditLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            // Handle the returned Uri
+            if (uri != null) {
+                val intent = Intent(this, EditActivity::class.java).apply {
                     putExtra("fileUri", uri.toString())
                 }
                 startActivity(intent)
@@ -43,7 +55,19 @@ class MainActivity : AppCompatActivity() {
                 ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), 1)
             } else {
                 // Permission has been granted. Start the file chooser.
-                selectFileLauncher.launch(arrayOf("application/pdf"))
+                selectFileToReadLauncher.launch(arrayOf("application/pdf"))
+            }
+        }
+
+        val selectPDFToEdit: Button = binding.selectPDFToEdit
+
+        selectPDFToEdit.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                // Permission is not granted
+                ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), 1)
+            } else {
+                // Permission has been granted. Start the file chooser.
+                selectFileToEditLauncher.launch(arrayOf("application/pdf"))
             }
         }
     }
@@ -54,7 +78,7 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == 1) { // The request code we used when we requested the permission
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission was granted. You can now start the file chooser.
-                selectFileLauncher.launch(arrayOf("application/pdf"))
+                selectFileToEditLauncher.launch(arrayOf("application/pdf"))
             } else {
                 // Permission was denied. You should explain to the user why the app needs the permission.
                 // And maybe provide a way to open the permission request dialog again.
